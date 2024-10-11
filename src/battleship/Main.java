@@ -6,50 +6,75 @@ public class Main {
     private static final Scanner sc = new Scanner(System.in);
 
     public static void main(String[] args) {
-        Player player1 = new Player();
-        Player player2 = new Player();
-
-        System.out.println("Player 1, place your ships on the game field");
+        System.out.println("Welcome to game BattleShip, programmed by Robert");
         System.out.println();
+
+        boolean loop = true;
+        while (loop) {
+            System.out.println("Enter a command to continue(Two Player, Quit)");
+            String input = sc.nextLine().toLowerCase();
+
+            // Main menu loop
+            switch (input) {
+                case "two player":
+                    battleLoop();
+                    break;
+                case "quit":
+                case "q":
+                    loop = false;
+                    break;
+                default:
+                    System.out.println("Invalid Command");
+            }
+        }
+
+    }
+
+    // Two player battle loop
+    public static void battleLoop() {
+
+        // Create player one
+        System.out.println("Enter first player name:");
+        String playerName = sc.next();
+        Player player1 = new Player(playerName);
+
+        // Create player two
+        System.out.println("Enter second player name:");
+        playerName = sc.next();
+        Player player2 = new Player(playerName);
+
+        // Place all the ships for player one
         placeShips(player1);
 
-        System.out.println("Press Enter and pass the move to another player");
-        sc.nextLine();
-        sc.nextLine();
+        // Clears the screen so next player can not see ship placement
         clearScreen();
 
-        System.out.println("Player 2, place your ships on the game field");
-        System.out.println();
+        // Place all ships for player two
         placeShips(player2);
 
         while (true) {
-
-            System.out.println("Press Enter and pass the move to another player");
-            sc.nextLine();
-            sc.nextLine();
+            // Clear the screen between player movements
             clearScreen();
 
             player2.printFogField();
             System.out.println("---------------------");
             player1.printVisibleField();
             System.out.println();
-            System.out.println("Player 1, it's your turn:");
+            System.out.println(player1.getName() + ", it's your turn:");
             String a = sc.next();
             System.out.println();
             shoot(player2, a);
 
             if (player2.isLost()) break;
 
-            System.out.println("Press Enter and pass the move to another player");
-            sc.nextLine();
-            sc.nextLine();
+            // Clear the screen between player movements
             clearScreen();
 
             player1.printFogField();
             System.out.println("---------------------");
             player2.printVisibleField();
             System.out.println();
-            System.out.println("Player 2, it's your turn:");
+            System.out.println(player2.getName() + ", it's your turn:");
             a = sc.next();
             System.out.println();
             shoot(player1, a);
@@ -58,12 +83,14 @@ public class Main {
         }
 
         if (player1.isLost()) {
-            System.out.println("Player 2 has won!");
+            System.out.println(player2.getName() + " has won!");
         } else {
-            System.out.println("Player 1 has won!");
+            System.out.println(player1.getName() + " has won!");
         }
     }
 
+    // Checks if coordinates, location, length, and other ships to verify ship can be placed
+    // Also places the ship
     public static boolean verifyShipPlacement(String a, String b, Ship ship, Player player) {
 
         // Checks for string size
@@ -113,6 +140,8 @@ public class Main {
             y1 = y2;
             y2 = temp;
         }
+
+        // Make sure the ship is not adjacent to another ship
         for (int x = x1; x <= x2; x++) {
             for (int y = y1; y <= y2; y++) {
                 if (player.getShip(x, y) != null) {
@@ -141,16 +170,18 @@ public class Main {
         // Place ship between two points
         for (int x = x1; x <= x2; x++) {
             for (int y = y1; y <= y2; y++) {
-                player.setShip(ship, x, y);
+                player.setVisibleField(ship, x, y);
             }
         }
         return true;
     }
 
+    // Verifies the battleship field size is within the range
     public static boolean invalidCoordinate(int n) {
         return (n < 0 || n > 9);
     }
 
+    // Converts coordinates (ex. A1 to 0, 0) to x, y coordinates
     public static int[] stringCoordinateToInt(String coordinate) {
         int x = coordinate.charAt(0) - 'A';
         int y = coordinate.charAt(1) - '1';
@@ -158,6 +189,14 @@ public class Main {
         return new int[] {x, y};
     }
 
+    // Converts x, y coordinates to string coordinates (ex. 0, 0 to A1)
+    public static String intCoordinateToString(int x, int y) {
+        return "" + (char) ( x + 'A') + (y + 1);
+    }
+
+    // Verifies proper locations then shoots spot
+    // Verifies if there is a ship and updates the ship health, the visible field, and
+    // the fog field.
     public static void shoot(Player player, String coordinates) {
         if (coordinates.length() < 2) {
             System.out.println("Improper coordinates");
@@ -194,7 +233,12 @@ public class Main {
         }
     }
 
+    // Loops through players ships to place them all.
     public static void placeShips(Player player) {
+
+        System.out.println(player.getName() + ", place your ships on the game field");
+        System.out.println();
+
         for (Ship ship : player.getShips()) {
             player.printVisibleField();
             System.out.println();
@@ -202,11 +246,20 @@ public class Main {
             System.out.println();
 
 
-            // Verify the coordinates are valid.
+            // Verify the coordinates are valid, keeps looping otherwise.
             boolean valid = false;
             while (!valid) {
                 // Get coordinates
+                System.out.println("Enter first coordinate: ");
                 String a = sc.next().toUpperCase();
+                int[] coordinates = stringCoordinateToInt(a);
+                if (invalidCoordinate(coordinates[0]) || invalidCoordinate(coordinates[1])) {
+                    System.out.println("Invalid coordinate.");
+                    continue;
+                }
+                // Display possible coordinates
+                printPossibleCoordinates(coordinates[0], coordinates[1], ship.getHealth());
+                System.out.println("Enter second coordinate: ");
                 String b = sc.next().toUpperCase();
                 valid = verifyShipPlacement(a, b, ship, player);
                 System.out.println();
@@ -216,7 +269,11 @@ public class Main {
         System.out.println();
     }
 
+    // Clears cmd screen between players
     public static void clearScreen() {
+        System.out.println("Press Enter and pass the move to another player.");
+        sc.nextLine();
+        sc.nextLine();
         try {
             if (System.getProperty("os.name").contains("Windows")) {
                 // This command will clear the CMD screen on Windows
@@ -229,5 +286,19 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        System.out.println("Press enter to continue");
+        sc.nextLine();
+    }
+
+    // Prints possible coordinates for ship placement based off of first coordinate.
+    public static void printPossibleCoordinates(int x, int y, int length) {
+        System.out.print("Valid placements: ");
+        length -= 1;
+        if (!invalidCoordinate(x + length)) System.out.print(intCoordinateToString(x + length, y) + " ");
+        if (!invalidCoordinate(x - length)) System.out.print(intCoordinateToString(x - length, y) + " ");
+        if (!invalidCoordinate(y + length)) System.out.print(intCoordinateToString(x, y + length) + " ");
+        if (!invalidCoordinate(y - length)) System.out.print(intCoordinateToString(x, y - length) + " ");
+        System.out.println();
     }
 }

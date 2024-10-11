@@ -4,19 +4,24 @@ public class Ship {
     private int health;
     private final String name;
 
+    // Constructor
     public Ship(Ships ship) {
         this.health = ship.cells;
         this.name = ship.toString();
     }
 
+    // Get health by number of cells left
     public int getHealth() {
         return this.health;
     }
+
+    // Reduce health to minimum of zero
     public int hitShip() {
         if (this.health == 0) return 0;
         return --this.health;
     }
 
+    // Retrieve the ship name
     public String getName() {
         return this.name;
     }
@@ -34,6 +39,7 @@ public class Ship {
             this.cells = cells;
         }
 
+        // Restructures the toString for customer name return.
         @Override
         public String toString() {
             String[] name = name().split("_");
