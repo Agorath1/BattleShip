@@ -1,24 +1,23 @@
 package battleship;
 
-import java.util.Arrays;
+import java.util.Random;
 
 public class Player {
     private final Ship[] ships;
-    private final char[][] fogField = new char[10][10];
-    private final Ship[][] visibleField = new Ship[10][10];
+    public Field field;
     private final String name;
 
     // Constructor
     public Player(String name) {
         this.name = name;
         ships = new Ship[] {
-                new Ship(Ship.Ships.AIRCRAFT_CARRIER),
-                new Ship(Ship.Ships.BATTLESHIP),
-                new Ship(Ship.Ships.SUBMARINE),
-                new Ship(Ship.Ships.CRUISER),
-                new Ship(Ship.Ships.DESTROYER)
+                new Ship(Ships.AIRCRAFT_CARRIER),
+                new Ship(Ships.BATTLESHIP),
+                new Ship(Ships.SUBMARINE),
+                new Ship(Ships.CRUISER),
+                new Ship(Ships.DESTROYER)
         };
-        createFogField();
+        createField(10, 10);
     }
 
     // Return an array of Ship objects
@@ -27,70 +26,8 @@ public class Player {
     }
 
     // Create the array of fog
-    public void createFogField() {
-        for (char[] chars : this.fogField) {
-            Arrays.fill(chars, '~');
-        }
-    }
-
-    // Prints the array of fog field with coordinates
-    public void printFogField() {
-        System.out.print(" ");
-        for (int i = 1; i <= 10; i++) {
-            System.out.print(" " + i);
-        }
-        System.out.println();
-
-        char r = 'A';
-        for (char[] chars : this.fogField) {
-            System.out.print(r++);
-            for (char aChar : chars) {
-                System.out.print(" " + aChar);
-            }
-            System.out.println();
-        }
-    }
-
-    //  Change individual cells of 2d array
-    public void setFogField(int x, int y, char c) {
-        this.fogField[x][y] = c;
-    }
-
-    // Gets char of individual fog cell in 2d array
-    public char getFogField(int x, int y) {
-        return this.fogField[x][y];
-    }
-
-    // Prints the locations of the ships filling in nulls with the fog field
-    public void printVisibleField() {
-        System.out.print(" ");
-        for (int i = 1; i <= 10; i++) {
-            System.out.print(" " + i);
-        }
-        System.out.println();
-
-        char r = 'A';
-        for (int i = 0; i < this.visibleField.length; i++) {
-            System.out.print(r++);
-            for (int j = 0; j < this.visibleField[i].length; j++) {
-                if (visibleField[i][j] == null) {
-                    System.out.print(" " + this.fogField[i][j]);
-                } else {
-                    System.out.print(" O");
-                }
-            }
-            System.out.println();
-        }
-    }
-
-    // Places a ship reference in the visible field 2d array
-    public void setVisibleField(Ship ship, int x, int y) {
-        this.visibleField[x][y] = ship;
-    }
-
-    // Retrieve the ship from the visible field
-    public Ship getShip(int x, int y) {
-        return this.visibleField[x][y];
+    public void createField(int length, int width) {
+        this.field = new Field(width, length);
     }
 
     // Checks if all ships health is at zero and declares the game is lost
@@ -104,5 +41,58 @@ public class Player {
     // Get player name
     public String getName() {
         return this.name;
+    }
+
+    public void setRandomShip(Ship ship) {
+        boolean valid = false;
+        Random random = new Random();
+        while (!valid) {
+            int[] wl = new int[2];
+            wl[0] = random.nextInt(field.width);
+            wl[1] = random.nextInt(field.length);
+            if (field.getVisibleField(wl) != null) continue;
+
+            String[] loc = field.printPossibleCoordinates(wl[0], wl[1], ship.getHealth()).split(" ");
+            int i = random.nextInt(loc.length);
+
+            valid = verifyBetween(wl, Field.stringCoordinateToInt(loc[i]), ship);
+        }
+    }
+
+    public boolean verifyBetween(int[] wl1, int[] wl2, Ship ship) {
+        if (wl1[0] > wl2[0]) {
+            int temp = wl1[0];
+            wl1[0] = wl2[0];
+            wl2[0] = temp;
+        }
+        if (wl1[1] > wl2[1]) {
+            int temp = wl1[1];
+            wl1[1] = wl2[1];
+            wl2[1] = temp;
+        }
+
+        for (int w = wl1[0]; w <= wl2[0]; w++) {
+            for (int l = wl1[1]; l <= wl2[1]; l++) {
+                if (field.getVisibleField(new int[]{w, l}) != null) return false;
+                if (!verifyAdjacent(w, l)) return false;
+            }
+        }
+
+        for (int w = wl1[0]; w <= wl2[0]; w++) {
+            for (int l = wl1[1]; l <= wl2[1]; l++) {
+                field.setVisibleField(new int[]{w, l}, ship);
+            }
+        }
+        return true;
+    }
+
+    public boolean verifyAdjacent(int w, int l) {
+        if (field.isValidCoordinate(new int[]{w + 1, l}) && field.getVisibleField(new int[]{w + 1, l}) != null)
+            return false;
+        if (field.isValidCoordinate(new int[]{w - 1, l}) && field.getVisibleField(new int[]{w - 1, l}) != null)
+            return false;
+        if (field.isValidCoordinate(new int[]{w, l + 1}) && field.getVisibleField(new int[]{w, l + 1}) != null)
+            return false;
+        return !field.isValidCoordinate(new int[]{w, l - 1}) || field.getVisibleField(new int[]{w, l - 1}) == null;
     }
 }
