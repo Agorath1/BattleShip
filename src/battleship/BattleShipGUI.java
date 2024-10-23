@@ -46,13 +46,7 @@ public class BattleShipGUI {
         SwingUtilities.invokeLater(BattleShipGUI::new);
     }
 
-    // Method to process player input (e.g., firing at a location)
-    private void processInput(String input) {
-        // Process the coordinates and update the game state
-        addGameBoard("Fired at: " + input + "\n");
-    }
-
-    // Method to update the game board display
+    // Clear out the game board
     public void resetGameBoard(String text) {
         System.out.print(text);
         gameBoardArea.setText(text);

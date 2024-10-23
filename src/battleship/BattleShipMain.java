@@ -41,15 +41,15 @@ public class BattleShipMain {
 
         for (Ship ship : player.getShips()) {
             clearScreen(player.field.printVisibleField());
-            addScreen(player.getName() + ", place your ships on the game field\n");
-            addScreen("\nEnter the coordinates of the " + ship.getName() + " (" + ship.getHealth() + " cells):\n\n");
+            addScreen(player.getName() + ", place your ships on the game field.\n");
+            addScreen("\nEnter the coordinates of the " + ship.getName() + " (" + ship.getHealth() + " cells).\n\n");
 
 
             // Verify the coordinates are valid, keeps looping otherwise.
             boolean valid = false;
             while (!valid) {
                 // Get coordinates
-                addScreen("Enter first coordinate:");
+                addScreen("Enter first coordinate: ");
                 String a = getInput().toUpperCase();
                 addScreen(a);
                 if (Objects.equals(a, "RANDOM") || Objects.equals(a, "R")) {
@@ -76,38 +76,26 @@ public class BattleShipMain {
     public static boolean verifyShipPlacement(String a, String b, Ship ship, Player player) {
         Field field = player.field;
 
-        // Checks for string size
-        if (a.length() < 2 || b.length() < 2 || a.length() > 3 || b.length() > 3) {
-            addScreen("Error! Invalid coordinate string size\n");
+        // Checks for valid string
+        if (!Field.isValidCoordinateString(a) || !Field.isValidCoordinateString(b)) {
+            addScreen("Error! Invalid coordinate string\n");
             return false;
         }
 
         // Convert to array coordinates
-        int[] coordinate1 = Field.stringCoordinateToInt(a);
-        int[] coordinate2 = Field.stringCoordinateToInt(b);
-        int w1 = coordinate1[0];
-        int w2 = coordinate2[0];
-        int l1 = coordinate1[1];
-        int l2 = coordinate2[1];
+        int[] aInt = Field.stringCoordinateToInt(a);
+        int[] bInt = Field.stringCoordinateToInt(b);
 
         // Checks for the boundaries
-        if (!field.isValidCoordinate(coordinate1) || !field.isValidCoordinate(coordinate2)) {
+        if (!field.isValidCoordinate(aInt) || !field.isValidCoordinate(bInt)) {
             addScreen("Error! Coordinates outside boundaries\n");
             return false;
         }
 
-        // Check if diagonal
-        if (Math.abs(w1 - w2) > 0 && Math.abs(l1 - l2) > 0) {
-            addScreen("Error! Ship is diagonal.\n");
-            return false;
-        }
-
-        // Check ship length
-        int length = Math.max(Math.abs(w1 - w2), Math.abs(l1 - l2)) + 1;
-        if (length != ship.getHealth()) {
-            addScreen("Error, Wrong length of the " + ship.getName() + "! Try again:\n");
-            return false;
-        }
+        int w1 = aInt[0];
+        int w2 = bInt[0];
+        int l1 = aInt[1];
+        int l2 = bInt[1];
 
         // Switch axis so that second axis is the largest
         if (w1 > w2) {
@@ -121,38 +109,27 @@ public class BattleShipMain {
             l2 = temp;
         }
 
+        // Check if diagonal
+        if (w2 - w1 > 0 && l2 - l1 > 0) {
+            addScreen("Error! Ship is diagonal.\n");
+            return false;
+        }
+
+        // Check ship length
+        int length = Math.max(w2 - w1, l2 - l1) + 1;
+        if (length != ship.getHealth()) {
+            addScreen("Error, Wrong length of the " + ship.getName() + "! Try again:\n");
+            return false;
+        }
+
         // Make sure the ship is not adjacent to another ship
-        for (int w = w1; w <= w2; w++) {
-            for (int l = l1; l <= l2; l++) {
-                if (player.field.getVisibleField(new int[]{w, l}) != null) {
-                    addScreen("Error! Wrong ship location! Try again:\n");
-                    return false;
-                }
-                if (field.isValidCoordinate(new int[]{w + 1, l}) && field.getVisibleField(new int[]{w + 1, l}) != null) {
-                    addScreen("Error! You placed it too close to another one. Try again:\n");
-                    return false;
-                }
-                if (field.isValidCoordinate(new int[]{w - 1, l}) && field.getVisibleField(new int[]{w - 1, l}) != null) {
-                    addScreen("Error! You placed it too close to another one. Try again:\n");
-                    return false;
-                }
-                if (field.isValidCoordinate(new int[]{w, l + 1}) && field.getVisibleField(new int[]{w, l + 1}) != null) {
-                    addScreen("Error! You placed it too close to another one. Try again:\n");
-                    return false;
-                }
-                if (field.isValidCoordinate(new int[]{w, l - 1}) && field.getVisibleField(new int[]{w, l - 1}) != null) {
-                    addScreen("Error! You placed it too close to another one. Try again:\n");
-                    return false;
-                }
-            }
+        if (!field.verifyBetween(aInt, bInt)) {
+            addScreen("Error! Ship is too close to another ship");
+            return false;
         }
 
         // Place ship between two points
-        for (int w = w1; w <= w2; w++) {
-            for (int l = l1; l <= l2; l++) {
-                field.setVisibleField(new int[]{w, l}, ship);
-            }
-        }
+        field.placeShip(aInt, bInt, ship);
         return true;
     }
 

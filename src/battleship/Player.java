@@ -17,7 +17,7 @@ public class Player {
                 new Ship(Ships.CRUISER),
                 new Ship(Ships.DESTROYER)
         };
-        createField(10, 10);
+        createField(Integer.parseInt(Main.options.get("width")), Integer.parseInt(Main.options.get("length")));
     }
 
     // Return an array of Ship objects
@@ -26,7 +26,7 @@ public class Player {
     }
 
     // Create the array of fog
-    public void createField(int length, int width) {
+    public void createField(int width, int length) {
         this.field = new Field(width, length);
     }
 
@@ -46,7 +46,8 @@ public class Player {
     public void setRandomShip(Ship ship) {
         boolean valid = false;
         Random random = new Random();
-        while (!valid) {
+        int count = 0;
+        while (!valid && count < 50) {
             int[] wl = new int[2];
             wl[0] = random.nextInt(field.width);
             wl[1] = random.nextInt(field.length);
@@ -55,7 +56,13 @@ public class Player {
             String[] loc = field.printPossibleCoordinates(wl[0], wl[1], ship.getHealth()).split(" ");
             int i = random.nextInt(loc.length);
 
-            valid = verifyBetween(wl, Field.stringCoordinateToInt(loc[i]), ship);
+            int[] wl2 = Field.stringCoordinateToInt(loc[i]);
+            valid = field.verifyBetween(wl, wl2);
+            if (valid) field.placeShip(wl, wl2, ship);
+            ++count;
+        }
+        if (count >= 50) {
+            System.out.println("Error placing ship");
         }
     }
 
@@ -74,7 +81,7 @@ public class Player {
         for (int w = wl1[0]; w <= wl2[0]; w++) {
             for (int l = wl1[1]; l <= wl2[1]; l++) {
                 if (field.getVisibleField(new int[]{w, l}) != null) return false;
-                if (!verifyAdjacent(w, l)) return false;
+                if (!field.verifyAdjacent(w, l)) return false;
             }
         }
 
@@ -84,15 +91,5 @@ public class Player {
             }
         }
         return true;
-    }
-
-    public boolean verifyAdjacent(int w, int l) {
-        if (field.isValidCoordinate(new int[]{w + 1, l}) && field.getVisibleField(new int[]{w + 1, l}) != null)
-            return false;
-        if (field.isValidCoordinate(new int[]{w - 1, l}) && field.getVisibleField(new int[]{w - 1, l}) != null)
-            return false;
-        if (field.isValidCoordinate(new int[]{w, l + 1}) && field.getVisibleField(new int[]{w, l + 1}) != null)
-            return false;
-        return !field.isValidCoordinate(new int[]{w, l - 1}) || field.getVisibleField(new int[]{w, l - 1}) == null;
     }
 }

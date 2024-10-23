@@ -115,4 +115,55 @@ public class Field {
         return valid.toString();
     }
 
+    public static boolean isValidCoordinateString(String coordinate) {
+        coordinate = coordinate.toUpperCase();
+        if (coordinate.length() < 2 || coordinate.length() > 4) return false;
+        if (coordinate.charAt(0) < 'A' || coordinate.charAt(0) > 'Z') return false;
+        try {
+            Integer.parseInt(coordinate.substring(1));
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    public boolean verifyAdjacent(int w, int l) {
+        if (Boolean.parseBoolean(Main.options.get("allowAdjacent"))) return true;
+        if (isValidCoordinate(new int[]{w + 1, l}) && getVisibleField(new int[]{w + 1, l}) != null)
+            return false;
+        if (isValidCoordinate(new int[]{w - 1, l}) && getVisibleField(new int[]{w - 1, l}) != null)
+            return false;
+        if (isValidCoordinate(new int[]{w, l + 1}) && getVisibleField(new int[]{w, l + 1}) != null)
+            return false;
+        return !isValidCoordinate(new int[]{w, l - 1}) || getVisibleField(new int[]{w, l - 1}) == null;
+    }
+
+    public boolean verifyBetween(int[] wl1, int[] wl2) {
+        if (wl1[0] > wl2[0]) {
+            int temp = wl1[0];
+            wl1[0] = wl2[0];
+            wl2[0] = temp;
+        }
+        if (wl1[1] > wl2[1]) {
+            int temp = wl1[1];
+            wl1[1] = wl2[1];
+            wl2[1] = temp;
+        }
+
+        for (int w = wl1[0]; w <= wl2[0]; w++) {
+            for (int l = wl1[1]; l <= wl2[1]; l++) {
+                if (getVisibleField(new int[]{w, l}) != null) return false;
+                if (!verifyAdjacent(w, l)) return false;
+            }
+        }
+        return true;
+    }
+
+    public void placeShip(int[] wl1, int[] wl2, Ship ship) {
+        for (int w = wl1[0]; w <= wl2[0]; w++) {
+            for (int l = wl1[1]; l <= wl2[1]; l++) {
+                setVisibleField(new int[]{w, l}, ship);
+            }
+        }
+    }
 }
